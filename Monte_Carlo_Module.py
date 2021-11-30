@@ -17,7 +17,7 @@ def num_assign(num_resident):
     num_1b1b = num_resident - num_2b2b
 
     family = math.floor(0.4 * num_2b2b)
-    solitude = math.floor(0.4 * num_2b2b + 0.5 * num_1b1b)
+    solitude = math.floor(0.4 * num_2b2b + 0.5 * num_1b1b) ###???0.2* num_2b2b?
     couple = num_resident - family - solitude
 
     # Because people have a greater probability of doing laundry on weekends, suppose the probability of doing laundry on weekends is 0.7, and the probability of doing laundry on workdays is 0.3
