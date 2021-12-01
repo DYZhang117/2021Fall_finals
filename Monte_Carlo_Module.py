@@ -1,10 +1,13 @@
 # coding: utf-8
+import random
 
 import numpy as np
 import pandas as pd
 import math
 from collections import deque, OrderedDict
 from collections import Counter
+
+
 # import statistics as st
 
 def num_assign(num_resident):
@@ -13,7 +16,7 @@ def num_assign(num_resident):
     # tenants are families (more than 3 people), about 20% are one person, and about 40% are two people. For 1B1B,
     # about 50% are two people living, and about 50% are living alone.
 
-    num_2b2b = math.floor(num_resident/2)
+    num_2b2b = math.floor(num_resident / 2)
     num_1b1b = num_resident - num_2b2b
 
     family = math.floor(0.4 * num_2b2b)
@@ -22,9 +25,10 @@ def num_assign(num_resident):
 
     # Because people have a greater probability of doing laundry on weekends, suppose the probability of doing laundry on weekends is 0.7, and the probability of doing laundry on workdays is 0.3
     num_family_weekday, num_solitude_weekday, num_couple_weekday = \
-        np.random.binomial(family,0.3), np.random.binomial(solitude,0.3), np.random.binomial(couple,0.3) # Number of people doing laundry on weekdays
+        np.random.binomial(family, 0.3), np.random.binomial(solitude, 0.3), np.random.binomial(couple,
+                                                                                               0.3)  # Number of people doing laundry on weekdays
     num_family_weekend, num_solitude_weekend, num_couple_weekend = \
-        family - num_family_weekday, family - num_solitude_weekday, family - num_couple_weekday # Number of people doing laundry on weekends
+        family - num_family_weekday, family - num_solitude_weekday, family - num_couple_weekday  # Number of people doing laundry on weekends
 
     # Random allocation Specific laundry days -- Workdays (Monday~Friday), Weekends (Saturday~Sunday)
     family_weekday_assign = dict(Counter((np.random.randint(1, 6, size=num_family_weekday))))
@@ -35,7 +39,7 @@ def num_assign(num_resident):
     couple_weekend_assign = dict(Counter((np.random.randint(6, 8, size=num_couple_weekend))))
 
     # for each list stores [family_num, solitude_num, couple_num]
-    Monday_num = [family_weekday_assign[1],solitude_weekday_assign[1],couple_weekday_assign[1]]
+    Monday_num = [family_weekday_assign[1], solitude_weekday_assign[1], couple_weekday_assign[1]]
     Tuesday_num = [family_weekday_assign[2], solitude_weekday_assign[2], couple_weekday_assign[2]]
     Wednesday_num = [family_weekday_assign[3], solitude_weekday_assign[3], couple_weekday_assign[3]]
     Thursday_num = [family_weekday_assign[4], solitude_weekday_assign[4], couple_weekday_assign[4]]
@@ -48,20 +52,22 @@ def num_assign(num_resident):
 
 
 def total_num_of_eachday(num_resident, frequency=1):
-    Monday_num, Tuesday_num, Wednesday_num, Thursday_num, Friday_num, Saturday_num, Sunday_num = 0, 0, 0, 0, 0, 0, 0
+    monday_num, tuesday_num, wednesday_num, thursday_num, friday_num, saturday_num, sunday_num = \
+        np.array([0] * 3), np.array([0] * 3), np.array([0] * 3), np.array([0] * 3), np.array([0] * 3), np.array(
+            [0] * 3), np.array([0] * 3)
 
     # The number of people in line according to "frequency"
     for _ in range(frequency):
         m1, t1, w1, t2, f1, s1, s2 = num_assign(num_resident)
-        Monday_num += m1
-        Tuesday_num += t1
-        Wednesday_num += w1
-        Thursday_num += t2
-        Friday_num += f1
-        Saturday_num += s1
-        Sunday_num += s2
+        monday_num += np.sum([np.array(m1), monday_num], axis=0)
+        tuesday_num += np.sum([np.array(t1), tuesday_num], axis=0)
+        wednesday_num += np.sum([np.array(w1), wednesday_num], axis=0)
+        thursday_num += np.sum([np.array(t2), thursday_num], axis=0)
+        friday_num += np.sum([np.array(f1), friday_num], axis=0)
+        saturday_num += np.sum([np.array(s1), saturday_num], axis=0)
+        sunday_num += np.sum([np.array(s2), sunday_num], axis=0)
 
-    return Monday_num, Tuesday_num, Wednesday_num, Thursday_num, Friday_num, Saturday_num, Sunday_num
+    return monday_num, tuesday_num, wednesday_num, thursday_num, friday_num, saturday_num, sunday_num
 
 
 # code reference https://github.com/Zainabzav/final_projects/blob/master/montecarlo_module.py
@@ -70,6 +76,7 @@ class Laundry:
     This class contains the basic and initial information of washing machines and dryers of the laundry.
     We only consider the operation of the laundry room for a week, including five working days and a weekends.
     '''
+
     def __init__(self, num_WashMachine, num_Dryer, num_resident, time_interval, washTime, dryTime, frequency):
         '''
         This function assigns the initial value for the attributes.
@@ -98,76 +105,82 @@ class Laundry:
         num_WashMachine = int(input("The Number of washing machines (Integer greater than 0):"))
         num_Dryer = int(input("The Number of dryers (Integer greater than 0):"))
         num_resident = int(input("The Number of resident (greater than 0):"))
-        time_interval = input("The time to wait for the user to take out the clothes each time the washing machine or dryer finishes its work (0 min< time< 15 mins):")
+        time_interval = input(
+            "The time to wait for the user to take out the clothes each time the washing machine or dryer finishes its work (0 min< time< 15 mins):")
         washTime = input("Each washing time of the washing machine (25 mins<time<70 mins):")
         dryTime = input("Each working time of the dryer (35 mins<time<140 mins):")
         frequency = input("The washing frequency of each unit (* times/a week):")
 
         return cls(num_WashMachine, num_Dryer, num_resident, time_interval, washTime, dryTime, frequency)
 
-    # 银行排队模型
-    def Que_Module(self, total_num_of_users):
-        # First we plan to separate each day into seven time intervals:
-        #       8am-10am, 10am-12pm, 12pm-2pm, 2pm-4pm, 4pm-6pm, 6pm-8pm, 8pm-10pm
-        #   A new batch of laundry customers will be added at the initial time of each interval (like 8am, 10am, 12pm, 2pm, ...)
+    def prob_users_arrive(self, total_num_of_users):
+        '''
+        This function
+        :param total_num_of_users: amount of residents plan to use washing machines and dryers (
+        Monday_num, Tuesday_num, Wednesday_num, Thursday_num, Friday_num, Saturday_num, Sunday_num) [family_num, solitude_num, couple_num]
+        :return:
+        '''
+        # First, we plan to divide each day into several intervals every half hour, assuming that a new batch of
+        # users will come every half hour (notice that the washing room is open from 8 am - 10 pm):
+        #   -> 29 time points
+        family_prob_arrive = random.choices(np.arange(1, 30), weights=([1] * 20 + [3] * 7 + [1] * 2),
+                                            k=total_num_of_users[0])
+        solitude_prob_arrive = random.choices(np.arange(1, 30), weights=([1] * 20 + [3] * 7 + [1] * 2),
+                                              k=total_num_of_users[1])
+        couple_prob_arrive = random.choices(np.arange(1, 30), weights=([1] * 20 + [3] * 7 + [1] * 2),
+                                            k=total_num_of_users[2])
+        waiting_washing = 0
+        waiting_dryer = 0
+        hour = 1
 
+        arrive_df = pd.DataFrame(family_prob_arrive, columns=['arrive_time']).sort_values(['arrive_time'])
+        arrive_df["unit"] = "family"
+        arrive_df["ned_washing_machine"] = 3 if self.frequency == 1 else 2
+        arrive_df["ned_dryer"] = 2 if self.frequency == 1 else 1
+        tmp1 = pd.DataFrame(solitude_prob_arrive, columns=['arrive_time']).sort_values(['arrive_time'])
+        tmp1["unit"] = "solitude"
+        tmp1["ned_washing_machine"] = 3 if self.frequency == 1 else 2
+        tmp1["ned_dryer"] = 2 if self.frequency == 1 else 1
+        tmp2 = pd.DataFrame(couple_prob_arrive, columns=['arrive_time']).sort_values(['arrive_time'])
+        tmp2["unit"] = "couple"
+        tmp2["ned_washing_machine"] = 2 if self.frequency == 1 else 1
+        tmp2["ned_dryer"] = 1 if self.frequency == 1 else 1
 
-        pass
+        arrive_df = arrive_df.append(tmp1)
+        arrive_df = arrive_df.append(tmp2)
 
-    def QueBank(self, tmp):
-        empty = deque([])
-        count1 = deque([])
-        count2 = deque([])
-        count3 = deque([])
-        count4 = deque([])
-        wait_dict = dict()
-        count1_waitime = 0
-        count2_waitime = 0
-        count3_waitime = 0
-        count4_waitime = 0
-        results = []
-        for i in range(len(tmp)):
-            count_waitime = [count1_waitime, count2_waitime, count3_waitime, count4_waitime]
-            Best_count = count_waitime.index(min(count_waitime))
-            if Best_count == 0:
-                count1.append(i + 1)
-                count1_waitime += int(tmp[i]) * 5
-                if count1_waitime not in wait_dict:
-                    wait_dict[count1_waitime] = [(i + 1, 1)]
-                else:
-                    wait_dict[count1_waitime].append((i + 1, 1))
-            elif Best_count == 1:
-                count2.append(i + 1)
-                count2_waitime += int(tmp[i]) * 5
-                if count2_waitime not in wait_dict:
-                    wait_dict[count2_waitime] = [(i + 1, 2)]
-                else:
-                    wait_dict[count2_waitime].append((i + 1, 2))
-            elif Best_count == 2:
-                count3.append(i + 1)
-                count3_waitime += int(tmp[i]) * 5
-                if count3_waitime not in wait_dict:
-                    wait_dict[count3_waitime] = [(i + 1, 3)]
-                else:
-                    wait_dict[count3_waitime].append((i + 1, 3))
-            elif Best_count == 3:
-                count4.append(i + 1)
-                count4_waitime += int(tmp[i]) * 5
-                if count4_waitime not in wait_dict:
-                    wait_dict[count4_waitime] = [(i + 1, 4)]
-                else:
-                    wait_dict[count4_waitime].append((i + 1, 4))
-        order = sorted(wait_dict)
-        results = []
-        for key in order:
-            sort_value = sorted(wait_dict[key], key=lambda t: t[1])
-            results.append([each[0] for each in sort_value])
-        tmp = []
-        for each in results:
-            tmp += each
-        return tmp
+        arrive_df['Got_washing_machine_time'] = np.nan
+        arrive_df['finish_washing_minute'] = np.nan
+        arrive_df['Got_dryer_time'] = np.nan
+        arrive_df['finish_dry_minute'] = np.nan
+        arrive_df['Wait_washing_duration'] = np.nan
+        arrive_df['Wait_dryer_duration'] = np.nan
+        arrive_df['finish_washing_queue'] = np.nan
+        arrive_df['finish_drying_queue'] = np.nan
+        arrive_df = arrive_df.reset_index().drop(["index"], axis=1)
 
-    tmp = input().split(" ")
+        counts = arrive_df['arrive_time'].value_counts()
+        washing_machine_in_use = 0
+        washing_dryer_in_use = 0
+        for minute in range(1, 30):
+            if minute not in counts.index.values:
+                patrons_this_minute = 0
+            else:
+                patrons_this_minute = counts[minute]
 
-    tmp = [str(each) for each in QueBank(tmp)]
-    print(" ".join(tmp))
+            # for washing process
+            while waiting_washing > 0 and (washing_machine_in_use < self.num_WashMachine):
+                current_available = self.num_WashMachine - washing_machine_in_use
+                while current_available > 0:
+                    oldest_arrive_min = arrive_df['arrive_time'][
+                        (arrive_df['Got_washing_machine_time'].isnull() == True) & (
+                                arrive_df['finish_washing_queue'].isnull() == True)].min()
+                    if oldest_arrive_min <= minute:
+                        nulls = arrive_df.loc[lambda x: (x['Got_washing_machine_time'].isnull() == True) & (
+                                x['arrive_time'] == oldest_arrive_min)]
+
+                        pass
+
+            # for drying process
+            pass
+        return
