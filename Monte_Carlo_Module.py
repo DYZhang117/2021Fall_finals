@@ -162,16 +162,19 @@ class Laundry:
         counts = arrive_df['arrive_time'].value_counts()
         washing_machine_in_use = 0
         washing_dryer_in_use = 0
+
+        # from 8am to 10pm -> separate into 29 arrived time points
         for minute in range(1, 30):
             if minute not in counts.index.values:
-                patrons_this_minute = 0
+                current_arrive_users = 0
             else:
-                patrons_this_minute = counts[minute]
+                current_arrive_users = counts[minute]
 
             # for washing process
             while waiting_washing > 0 and (washing_machine_in_use < self.num_WashMachine):
-                current_available = self.num_WashMachine - washing_machine_in_use
-                while current_available > 0:
+                current_available_WashMachine = self.num_WashMachine - washing_machine_in_use
+                while current_available_WashMachine > 0:
+                    # 如果有新的可提供机器，优先将机器提供给之前排队的用户使用
                     oldest_arrive_min = arrive_df['arrive_time'][
                         (arrive_df['Got_washing_machine_time'].isnull() == True) & (
                                 arrive_df['finish_washing_queue'].isnull() == True)].min()
