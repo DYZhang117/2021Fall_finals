@@ -16,8 +16,7 @@ It should be noted that Orchard Downs is a community that primarily provided for
 3. People usually start washing clothes from 8 am to 10 pm, and they are more likely to start washing clothes at 6:00 PM-9:00 PM. And people prefer to do laundry on weekends.
 4. Every time washing clothes, they need to use both washing machines and dryers.
 5. Assume that all the apartments are rented out.
-6. 
-If the washing frequency is once a week:
+6. If the washing frequency is once a week:
 Each family (more than 3 people) and a unit with 2 people must use 3 washing machines and 2 dryers each time. A tenant living alone uses 2 washing machines and 1 dryer at a time.
 If the washing frequency is twice a week or more:
 Each family (more than 3 people) and a unit with 2 people use 2 washing machines and 1 dryer each time. A tenant living alone uses 1 washing machine and 1 dryer at a time.
@@ -25,7 +24,7 @@ Each family (more than 3 people) and a unit with 2 people use 2 washing machines
 ## Variables
 1. The number of dryers and washing machines (input fixed values).
 2. The number of people doing laundry each day (take 5-10% of the rental unit).
-3. The time to wait for the user to take out the clothes each time the washing machine or dryer finishes its work (0 min<time<15 mins).
+3. The interval between the user putting clothes from the washing machine to the dryer (0 min<time<15 mins).
 4. Each washing time of the washing machine (25 mins<time<70 mins). Each working time of the dryer (35 mins<time<140 mins).
 5. The washing frequency of each unit.
  
