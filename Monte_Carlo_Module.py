@@ -121,6 +121,11 @@ class Laundry:
         return monday_num, tuesday_num, wednesday_num, thursday_num, friday_num, saturday_num, sunday_num
 
     def prob_users_arrive(self, total_num_of_users):
+        '''
+        This function only considers people use one washing machine to repeat washing
+        :param total_num_of_users: The result of total_num_of_eachday()
+        :return: arrive_df (dataframe)
+        '''
         # from 8am to 10pm, total 14*60 mins
         family_prob_arrive = random.choices(np.arange(0, 14 * 60),
                                             weights=([1] * (10 * 60) + [3] * (3 * 60) + [1] * (60)),
@@ -157,8 +162,6 @@ class Laundry:
 
         arrive_df = arrive_df.sort_values(by=["arrive_time"]).reset_index().drop(["index"], axis=1)
 
-        # suppose there are 5 washers and running time is 60 minutes
-        # num_WashMachine, num_Dryer, time_interval, washTime, dryTime, frequency
         washer_no = [0] * self.num_WashMachine
         got_washer = []
         for i in range(arrive_df.shape[0]):
@@ -167,7 +170,6 @@ class Laundry:
                 i] * self.washTime
 
             if i + 1 < arrive_df.shape[0]:
-                # 后期把time_interval拆分成同一人和不同人的间隔
                 time_diff = random.choices(np.arange(0, self.time_interval),
                                            weights=([0] * np.arange(0, self.time_interval).size),
                                            k=1)[0]
@@ -186,6 +188,11 @@ class Laundry:
         return arrive_df
 
     def update_method(self, total_num_of_users):
+        '''
+        This function considers people using any available washing machine, not repeat use one machine
+        :param total_num_of_users: The result of total_num_of_eachday()
+        :return: arrive_df (dataframe)
+        '''
         # from 8am to 10pm, total 14*60 mins
         family_prob_arrive = random.choices(np.arange(0, 14 * 60),
                                             weights=([1] * (10 * 60) + [3] * (3 * 60) + [1] * (60)),
@@ -253,7 +260,6 @@ class Laundry:
         new_arrive_df = pd.DataFrame({"Mark": mark,
                                       "arrive_time": arrival})
 
-        # suppose there are 3 washers and running time is 60 minutes
         washer_no = [0] * self.num_WashMachine
         got_washer = []
         for i in range(new_arrive_df.shape[0]):
@@ -283,7 +289,7 @@ class Laundry:
         time_diff = random.choices(np.arange(0, self.time_interval),
                                    weights=([0] * np.arange(0, self.time_interval).size),
                                    k=1)[0]
-        arrive_dryer_time = list(arrive_df['finish_washing_minute'] + time_diff)  # 从洗衣房到烘干机的时间15min
+        arrive_dryer_time = list(arrive_df['finish_washing_minute'] + time_diff)
 
         # drying process
         mark = []
