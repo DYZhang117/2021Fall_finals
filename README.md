@@ -34,5 +34,6 @@ Each family (more than 3 people) and a unit with 2 people use 2 washing machines
 
 ## Reference
 https://housing.illinois.edu/Tools/Laundry
+
 https://housing.illinois.edu/Living-Options/Apartments/Orchard-Downs/map-floor-plans
 
