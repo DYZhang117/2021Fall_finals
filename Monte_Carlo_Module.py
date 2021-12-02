@@ -1,6 +1,6 @@
 # coding: utf-8
 import random
-
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import math
@@ -71,7 +71,7 @@ class Laundry:
             np.random.binomial(family, 0.3), np.random.binomial(solitude, 0.3), np.random.binomial(couple,
                                                                                                    0.3)  # Number of people doing laundry on weekdays
         num_family_weekend, num_solitude_weekend, num_couple_weekend = \
-            family - num_family_weekday, family - num_solitude_weekday, family - num_couple_weekday  # Number of people doing laundry on weekends
+            family - num_family_weekday, solitude - num_solitude_weekday, couple - num_couple_weekday  # Number of people doing laundry on weekends
 
         # Random allocation Specific laundry days -- Workdays (Monday~Friday), Weekends (Saturday~Sunday)
         family_weekday_assign = dict(Counter((np.random.randint(1, 6, size=num_family_weekday))))
@@ -148,14 +148,12 @@ class Laundry:
         arrive_df = arrive_df.append(tmp1)
         arrive_df = arrive_df.append(tmp2)
 
-        arrive_df['Wait_washing_duration'] = np.nan
+        arrive_df['Total_Wait_washing_duration'] = np.nan
         arrive_df['Got_washing_machine_time'] = np.nan
         arrive_df['finish_washing_minute'] = np.nan
         arrive_df['Got_dryer_time'] = np.nan
         arrive_df['finish_dry_minute'] = np.nan  # Got_dryer_time + n*dryer_time
-        arrive_df['Wait_dryer_duration'] = np.nan  # Got_dryer_time - finish _washing_minute
-        arrive_df['finish_washing_queue'] = np.nan
-        arrive_df['finish_drying_queue'] = np.nan
+        arrive_df['Total_Wait_dryer_duration'] = np.nan  # Got_dryer_time - finish _washing_minute
 
         arrive_df = arrive_df.sort_values(by=["arrive_time"]).reset_index().drop(["index"], axis=1)
 
@@ -181,7 +179,7 @@ class Laundry:
                         washer_no[j] -= interval
 
         arrive_df["Got_washing_machine_time"] = got_washer
-        arrive_df['Wait_washing_duration'] = arrive_df['Got_washing_machine_time'] - arrive_df['arrive_time']
+        arrive_df['Total_Wait_washing_duration'] = arrive_df['Got_washing_machine_time'] - arrive_df['arrive_time']
         arrive_df['finish_washing_minute'] = arrive_df['Got_washing_machine_time'] + arrive_df[
             'ned_washing_machine'] * self.washTime
 
@@ -215,14 +213,12 @@ class Laundry:
         arrive_df = arrive_df.append(tmp1)
         arrive_df = arrive_df.append(tmp2)
 
-        arrive_df['Wait_washing_duration'] = np.nan
+        arrive_df['Total_Wait_washing_duration'] = np.nan
         arrive_df['Got_washing_machine_time'] = np.nan
         arrive_df['finish_washing_minute'] = np.nan
         arrive_df['Got_dryer_time'] = np.nan
         arrive_df['finish_dry_minute'] = np.nan  # Got_dryer_time + n*dryer_time
-        arrive_df['Wait_dryer_duration'] = np.nan  # Got_dryer_time - finish _washing_minute
-        arrive_df['finish_washing_queue'] = np.nan
-        arrive_df['finish_drying_queue'] = np.nan
+        arrive_df['Total_Wait_dryer_duration'] = np.nan  # Got_dryer_time - finish _washing_minute
 
         arrive_df = arrive_df.sort_values(by=["arrive_time"]).reset_index().drop(["index"], axis=1)
 
@@ -273,15 +269,16 @@ class Laundry:
                         washer_no[j] -= time_interval
 
         new_arrive_df["Got_washing_machine_time"] = got_washer
-        new_arrive_df['Wait_washing_duration'] = new_arrive_df['Got_washing_machine_time'] - new_arrive_df[
+        new_arrive_df['Total_Wait_washing_duration'] = new_arrive_df['Got_washing_machine_time'] - new_arrive_df[
             'arrive_time']
-        new_arrive_df['finish_washing_minute'] = new_arrive_df['Got_washing_machine_time'] + self.washTime  # running time
+        new_arrive_df['finish_washing_minute'] = new_arrive_df[
+                                                     'Got_washing_machine_time'] + self.washTime  # running time
 
         arrive_df['Got_washing_machine_time'] = list(new_arrive_df.groupby("Mark")["Got_washing_machine_time"].min())
 
         new_arrive_df = new_arrive_df.groupby("Mark")[
-            ["arrive_time", "Wait_washing_duration", "finish_washing_minute"]].max().reset_index()
-        arrive_df['Wait_washing_duration'] = new_arrive_df['Wait_washing_duration']
+            ["arrive_time", "Total_Wait_washing_duration", "finish_washing_minute"]].max().reset_index()
+        arrive_df['Total_Wait_washing_duration'] = new_arrive_df['Total_Wait_washing_duration']
         arrive_df['finish_washing_minute'] = new_arrive_df['finish_washing_minute']
         time_diff = random.choices(np.arange(0, self.time_interval),
                                    weights=([0] * np.arange(0, self.time_interval).size),
@@ -318,7 +315,7 @@ class Laundry:
         got_dryer = []
         for i in range(new_arrive_df.shape[0]):
             got_dryer.append(new_arrive_df["arrive_time"][i] + min(dryer_no))
-            dryer_no[dryer_no.index(min(dryer_no))] = min(dryer_no) + self.dryTime # running time
+            dryer_no[dryer_no.index(min(dryer_no))] = min(dryer_no) + self.dryTime  # running time
 
             if i + 1 < new_arrive_df.shape[0]:
                 time_interval = new_arrive_df["arrive_time"][i + 1] - new_arrive_df["arrive_time"][i]
@@ -329,14 +326,14 @@ class Laundry:
                         dryer_no[j] -= time_interval
 
         new_arrive_df["Got_dryer_time"] = got_dryer
-        new_arrive_df['Wait_dryer_duration'] = new_arrive_df['Got_dryer_time'] - new_arrive_df['arrive_time']
-        new_arrive_df['finish_dry_minute'] = new_arrive_df['Got_dryer_time'] + self.dryTime # running time
+        new_arrive_df['Total_Wait_dryer_duration'] = new_arrive_df['Got_dryer_time'] - new_arrive_df['arrive_time']
+        new_arrive_df['finish_dry_minute'] = new_arrive_df['Got_dryer_time'] + self.dryTime  # running time
 
         arrive_df['Got_dryer_time'] = list(new_arrive_df.groupby("Mark")["Got_dryer_time"].min())
 
         new_arrive_df = new_arrive_df.groupby("Mark")[
-            ["arrive_time", "Wait_dryer_duration", "finish_dry_minute"]].max().reset_index()
-        arrive_df['Wait_dryer_duration'] = new_arrive_df['Wait_dryer_duration']
+            ["arrive_time", "Total_Wait_dryer_duration", "finish_dry_minute"]].max().reset_index()
+        arrive_df['Total_Wait_dryer_duration'] = new_arrive_df['Total_Wait_dryer_duration']
         arrive_df['finish_dry_minute'] = new_arrive_df['finish_dry_minute']
 
         return arrive_df
@@ -344,5 +341,11 @@ class Laundry:
 if __name__ == '__main__':
     laundry = Laundry.attribute_assign()
     monday_num, tuesday_num, wednesday_num, thursday_num, friday_num, saturday_num, sunday_num = laundry.total_num_of_eachday()
-    tmp1 = laundry.prob_users_arrive(monday_num)
-    tmp2 = laundry.update_method(monday_num)
+
+    mon = laundry.update_method(monday_num)
+    tue = laundry.update_method(tuesday_num)
+    wed = laundry.update_method(wednesday_num)
+    thu = laundry.update_method(thursday_num)
+    fri = laundry.update_method(friday_num)
+    sat = laundry.update_method(saturday_num)
+    sun = laundry.update_method(sunday_num)
