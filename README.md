@@ -30,7 +30,7 @@ Each family (more than 3 people) and a unit with 2 people use 2 washing machines
 5. The washing frequency of each unit.
  
 ## Hypotheses
-1.	No more than 80% of the time in a week, people go to the laundry to complete the washing and drying work within 2 hours.
+1.	No more than 80% of the time in a week, the avg waiting duration of doing laundry is no longer than 2 hours.
 2.	If 20% of residents reduce their washing frequency per week, the average queue time will be reduced.
 
 ## Reference
