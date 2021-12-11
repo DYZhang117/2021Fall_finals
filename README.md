@@ -1,7 +1,7 @@
 ## Monte Carlo Simulation-Waiting Time for Available Machines in Laundry Room
 Team: Diyan Zhang (diyanz2, GitHub: DYZhang117), Hao Jia (haoj4, GitHub: Kivi1998)
 
-GitHub link: https://github.com/DYZhang117/MC_laundry_waiting_time
+GitHub link: https://github.com/DYZhang117/2021Fall_finals
  
 Communal laundry rooms are very common in the United States. The main customers in this industry include renters, college students, and residents of multi-family residential apartments. Many old-fashioned apartments in the United States only provide public laundry and are not equipped with independent washing machine/dryer services.
  
