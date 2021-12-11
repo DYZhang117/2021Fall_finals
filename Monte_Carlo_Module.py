@@ -4,9 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import math
-from collections import deque, OrderedDict
 from collections import Counter
-
+from matplotlib.pyplot import MultipleLocator
 
 # import statistics as st
 
@@ -17,24 +16,29 @@ class Laundry:
     We only consider the operation of the laundry room for a week, including five working days and a weekends.
     '''
 
-    def __init__(self, num_WashMachine, num_Dryer, num_resident, time_interval, washTime, dryTime, frequency):
+    def __init__(self, num_WashMachine, num_Dryer, num_resident, time_interval, interval_washORdry, washTime, dryTime,
+                 frequency, times):
         '''
         This function assigns the initial value for the attributes.
         :param num_WashMachine: number of washing machines
         :param num_Dryer: number of dryers
         :param num_resident: number of residents
-        :param time_interval: The time to wait for the user to take out the clothes each time the washing machine or dryer finishes its work (0 min< time< 15 mins)
+        :param time_interval: The Maximum time to wait for the user to take out the clothes each time the washing machine or dryer finishes its work (0 min< time< 15 mins)
+        :param interval_washORdry: The Maximum time interval between two machine (end-beginning) [both washing machines and dryers](0 min< time< 15 mins)
         :param washTime: Each washing time of the washing machine (25 mins<time<70 mins)
         :param dryTime: Each working time of the dryer (35 mins<time<140 mins)
         :param frequency: The washing frequencnum_residenty of each unit.
+        :param times: Number of repetitions
         '''
         self.num_WashMachine = num_WashMachine
         self.num_Dryer = num_Dryer
         self.num_resident = num_resident
         self.time_interval = time_interval
+        self.interval_washORdry = interval_washORdry
         self.washTime = washTime
         self.dryTime = dryTime
         self.frequency = frequency
+        self.times = times
 
     @classmethod
     def attribute_assign(cls):
@@ -46,18 +50,25 @@ class Laundry:
         num_Dryer = int(input("The Number of dryers (Integer greater than 0):"))
         num_resident = int(input("The Number of resident (greater than 0):"))
         time_interval = int(input(
-            "The time to wait for the user to take out the clothes each time the washing machine or dryer finishes its work (0 min< time< 15 mins):"))
+            "The Maximum time to wait for the user to take out the clothes each time the washing machine or dryer finishes its work (0 min< time< 15 mins):"))
+        interval_washORdry = int(input(
+            "The Maximum time interval between two machine [end-beginning & both washing machines and dryers](0 min< time< 15 mins):"))
         washTime = int(input("Each washing time of the washing machine (25 mins<time<70 mins):"))
         dryTime = int(input("Each working time of the dryer (35 mins<time<140 mins):"))
         frequency = int(input("The washing frequency of each unit (* times/a week):"))
+        times = int(input("The times of simulation:"))
 
-        return cls(num_WashMachine, num_Dryer, num_resident, time_interval, washTime, dryTime, frequency)
+        return cls(num_WashMachine, num_Dryer, num_resident, time_interval, interval_washORdry, washTime, dryTime,
+                   frequency, times)
 
     def num_assign(self):
-        # frequency = k execute k times num_assign();
-        # according to "readme.md" -- The orchard downs contains almost same number of 2B2B and 1B1B. About 40% of 2B2B
-        # tenants are families (more than 3 people), about 20% are one person, and about 40% are two people. For 1B1B,
-        # about 50% are two people living, and about 50% are living alone.
+        '''
+        This function will simulate the number of people visiting the laundry room every day (when frequency equals to "1")
+            according to "readme.md" -- The orchard downs contains almost same number of 2B2B and 1B1B. About 40% of 2B2B
+            tenants are families (more than 3 people), about 20% are one person, and about 40% are two people. For 1B1B,
+            about 50% are two people living, and about 50% are living alone.
+        :return: the number of people in three different units per day (when frequency equals to "1")
+        '''
 
         num_2b2b = math.floor(self.num_resident / 2)
         num_1b1b = self.num_resident - num_2b2b
@@ -99,15 +110,19 @@ class Laundry:
         Saturday_num = [family_weekend_assign[6], solitude_weekend_assign[6], couple_weekend_assign[6]]
         Sunday_num = [family_weekend_assign[7], solitude_weekend_assign[7], couple_weekend_assign[7]]
 
-        # Return the number of people in three different units per day
         return Monday_num, Tuesday_num, Wednesday_num, Thursday_num, Friday_num, Saturday_num, Sunday_num
 
     def total_num_of_eachday(self):
+        '''
+        This function will simulate the number of people visiting the laundry room every day (when frequency equals to "k")
+        :return: the number of people in three different units per day (when frequency equals to "k")
+        '''
         monday_num, tuesday_num, wednesday_num, thursday_num, friday_num, saturday_num, sunday_num = \
             np.array([0] * 3), np.array([0] * 3), np.array([0] * 3), np.array([0] * 3), np.array([0] * 3), np.array(
                 [0] * 3), np.array([0] * 3)
 
         # The number of people in line according to "frequency"
+        # frequency = k execute k times num_assign();
         for _ in range(self.frequency):
             m1, t1, w1, t2, f1, s1, s2 = self.num_assign()
             monday_num += np.sum([np.array(m1), monday_num], axis=0)
@@ -226,6 +241,7 @@ class Laundry:
         arrive_df['Got_dryer_time'] = np.nan
         arrive_df['finish_dry_minute'] = np.nan  # Got_dryer_time + n*dryer_time
         arrive_df['Total_Wait_dryer_duration'] = np.nan  # Got_dryer_time - finish _washing_minute
+        arrive_df['Total_Waiting_time'] = np.nan
 
         arrive_df = arrive_df.sort_values(by=["arrive_time"]).reset_index().drop(["index"], axis=1)
 
@@ -260,6 +276,9 @@ class Laundry:
         new_arrive_df = pd.DataFrame({"Mark": mark,
                                       "arrive_time": arrival})
 
+        washing_interval = random.choices(np.arange(0, self.interval_washORdry),
+                                          weights=([1] * np.arange(0, self.interval_washORdry).size),
+                                          k=1)[0]
         washer_no = [0] * self.num_WashMachine
         got_washer = []
         for i in range(new_arrive_df.shape[0]):
@@ -267,7 +286,7 @@ class Laundry:
             washer_no[washer_no.index(min(washer_no))] = min(washer_no) + self.washTime  # running time
 
             if i + 1 < new_arrive_df.shape[0]:
-                time_interval = new_arrive_df["arrive_time"][i + 1] - new_arrive_df["arrive_time"][i]
+                time_interval = new_arrive_df["arrive_time"][i + 1] - new_arrive_df["arrive_time"][i] - washing_interval
                 for j in range(len(washer_no)):
                     if washer_no[j] <= time_interval:
                         washer_no[j] = 0
@@ -287,7 +306,7 @@ class Laundry:
         arrive_df['Total_Wait_washing_duration'] = new_arrive_df['Total_Wait_washing_duration']
         arrive_df['finish_washing_minute'] = new_arrive_df['finish_washing_minute']
         time_diff = random.choices(np.arange(0, self.time_interval),
-                                   weights=([0] * np.arange(0, self.time_interval).size),
+                                   weights=([1] * np.arange(0, self.time_interval).size),
                                    k=1)[0]
         arrive_dryer_time = list(arrive_df['finish_washing_minute'] + time_diff)
 
@@ -315,7 +334,9 @@ class Laundry:
 
         new_arrive_df = pd.DataFrame({"Mark": mark,
                                       "arrive_time": arrival})
-
+        drying_interval = random.choices(np.arange(0, self.interval_washORdry),
+                                         weights=([1] * np.arange(0, self.interval_washORdry).size),
+                                         k=1)[0]
         # suppose there are 2 dryers and running time is 45 minutes
         dryer_no = [0] * self.num_Dryer
         got_dryer = []
@@ -324,7 +345,7 @@ class Laundry:
             dryer_no[dryer_no.index(min(dryer_no))] = min(dryer_no) + self.dryTime  # running time
 
             if i + 1 < new_arrive_df.shape[0]:
-                time_interval = new_arrive_df["arrive_time"][i + 1] - new_arrive_df["arrive_time"][i]
+                time_interval = new_arrive_df["arrive_time"][i + 1] - new_arrive_df["arrive_time"][i] - drying_interval
                 for j in range(len(dryer_no)):
                     if dryer_no[j] <= time_interval:
                         dryer_no[j] = 0
@@ -341,17 +362,81 @@ class Laundry:
             ["arrive_time", "Total_Wait_dryer_duration", "finish_dry_minute"]].max().reset_index()
         arrive_df['Total_Wait_dryer_duration'] = new_arrive_df['Total_Wait_dryer_duration']
         arrive_df['finish_dry_minute'] = new_arrive_df['finish_dry_minute']
+        arrive_df['Total_Waiting_time'] = arrive_df["Total_Wait_washing_duration"] + arrive_df[
+            "Total_Wait_dryer_duration"]
 
         return arrive_df
 
+
 if __name__ == '__main__':
     laundry = Laundry.attribute_assign()
-    monday_num, tuesday_num, wednesday_num, thursday_num, friday_num, saturday_num, sunday_num = laundry.total_num_of_eachday()
 
-    mon = laundry.update_method(monday_num)
-    tue = laundry.update_method(tuesday_num)
-    wed = laundry.update_method(wednesday_num)
-    thu = laundry.update_method(thursday_num)
-    fri = laundry.update_method(friday_num)
-    sat = laundry.update_method(saturday_num)
-    sun = laundry.update_method(sunday_num)
+    day_list = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+    fig, ax = plt.subplots(figsize=(20, 20))
+    fig1, ax1 = plt.subplots(figsize=(20, 20))
+    for times in range(laundry.times):
+        monday_num, tuesday_num, wednesday_num, thursday_num, friday_num, saturday_num, sunday_num = laundry.total_num_of_eachday()
+
+        mon = laundry.update_method(monday_num)
+        tue = laundry.update_method(tuesday_num)
+        wed = laundry.update_method(wednesday_num)
+        thu = laundry.update_method(thursday_num)
+        fri = laundry.update_method(friday_num)
+        sat = laundry.update_method(saturday_num)
+        sun = laundry.update_method(sunday_num)
+
+        for day in day_list:
+            ###############first plot##############
+            if day in ["sat", "sun"]:
+                scatter = ax.scatter(x=eval(day + '["arrive_time"]'), y=eval(day + '["Total_Waiting_time"]'), alpha=0.2,
+                                     s=10, c='r')
+            else:
+                scatter = ax.scatter(x=eval(day + '["arrive_time"]'), y=eval(day + '["Total_Waiting_time"]'), alpha=0.2,
+                                     s=10, c='b')
+
+            y_major_locator = MultipleLocator(120)
+            # 把y轴的刻度间隔设置为10，并存在变量里
+            ax = plt.gca()
+            ax.yaxis.set_major_locator(y_major_locator)
+            plt.ylim(0, 3700)
+
+            ###############second plot##############
+
+
+        #每天 / 每周 total平均等待时间 / washing平均等待时间 / drying平均等待时间
+        # 每天washing平均等待时间 - sum所有"Total_Wait_washing_duration"/今天访问人数
+        # 每天drying平均等待时间 - sum所有"Total_Wait_dryer_duration"/今天访问人数
+        print("\nThe results of {0} times:".format(times))
+        day_list = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+        tmp_list = []
+        for eachday in day_list:
+            num_user_eachday = eval(eachday + ".shape[0]")
+            waiting_eachday_washing = eval(eachday + '["Total_Wait_washing_duration"].sum()')
+            waiting_eachday_drying = eval(eachday + '["Total_Wait_dryer_duration"].sum()')
+
+            avg_waiting_washing = waiting_eachday_washing / num_user_eachday
+            print("avg mins of waiting washing machines in {0}: {1}mins ({2}hs)".format(eachday,
+                                                                                        round(avg_waiting_washing, 0),
+                                                                                        round(avg_waiting_washing / 60,
+                                                                                              0)))
+            avg_waiting_drying = waiting_eachday_drying / num_user_eachday
+            print("avg mins of waiting dryers in {0}: {1}mins ({2}hs)".format(eachday, round(avg_waiting_drying, 0),
+                                                                              round(avg_waiting_drying / 60, 0)))
+            avg_waiting = (waiting_eachday_washing + waiting_eachday_drying) / num_user_eachday
+            print("avg time of waiting in laundry in {0}: {1}mins ({2}hs)".format(eachday, round(avg_waiting, 0),
+                                                                                  round(avg_waiting / 60, 0)))
+
+            tmp_list.append([avg_waiting_washing, avg_waiting_drying, avg_waiting])
+        # 每周平均等待时间
+        avg_waiting_week_washing = sum(list(map(lambda x: x[0], [y for y in tmp_list]))) / 7
+        print("avg mins of waiting washing machines for a week: {0}mins ({1}hs)".format(
+            round(avg_waiting_week_washing, 0), round(avg_waiting_week_washing / 60, 0)))
+        avg_waiting_week_drying = sum(list(map(lambda x: x[1], [y for y in tmp_list]))) / 7
+        print("avg mins of waiting dryers for a week: {0}mins ({1}hs)".format(round(avg_waiting_week_drying, 0),
+                                                                              round(avg_waiting_week_drying / 60, 0)))
+        avg_waiting_week = sum(list(map(lambda x: x[2], [y for y in tmp_list]))) / 7
+        print("avg time of waiting in laundry for a week: {0}mins ({1}hs)".format(round(avg_waiting_week, 0),
+                                                                                  round(avg_waiting_week / 60, 0)))
+    ax.axhline(y=120, color='black', linestyle='--')
+
+
