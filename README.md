@@ -24,10 +24,12 @@ Each family (more than 3 people) and a unit with 2 people will use 2 washing mac
  
 ## Variables
 1. The number of dryers and washing machines (input fixed values).
-2. The number of people doing laundry each day (take 5-10% of the rental unit).
-3. The interval between the user putting clothes from the washing machine to the dryer (0 min<time<15 mins).
-4. Each washing time of the washing machine (25 mins<time<70 mins). Each working time of the dryer (35 mins<time<140 mins).
-5. The washing frequency of each unit.
+2. The number of residents (input value).
+3. The Maximum time to wait for the user to take out the clothes each time the washing machine or dryer finishes its work (0 min< time< 15 mins)
+4. The Maximum time interval between two machine (end-beginning) [both washing machines and dryers](0 min< time< 15 mins)
+5. Each maximum washing time of the washing machine (25 mins<time<70 mins). Each maximum working time of the dryer (35 mins<time<140 mins).
+6. The washing frequency of each unit.
+7. Simulation times.
  
 ## Hypotheses
 1.	80% of the waiting durations are less than 2 hours.
