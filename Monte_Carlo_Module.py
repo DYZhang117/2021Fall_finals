@@ -72,7 +72,7 @@ class Laundry:
         '''
 
         num_2b2b = math.floor((percent * self.num_resident) / 2)
-        num_1b1b = self.num_resident - num_2b2b
+        num_1b1b = (percent * self.num_resident) - num_2b2b
 
         family = math.floor(0.4 * num_2b2b)
         solitude = math.floor(0.4 * num_2b2b + 0.5 * num_1b1b)
@@ -135,7 +135,7 @@ class Laundry:
             sunday_num += np.sum([np.array(s2), sunday_num], axis=0)
 
         return monday_num, tuesday_num, wednesday_num, thursday_num, friday_num, saturday_num, sunday_num
-
+    # code reference https://github.com/Zainabzav/final_projects
     def prob_users_arrive(self, total_num_of_users):
         '''
         This function only considers people use one washing machine to repeat washing
